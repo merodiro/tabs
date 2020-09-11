@@ -4,17 +4,17 @@ import React, {
   useMemo,
   useContext,
   cloneElement,
-  isValidElement
+  isValidElement,
+  useCallback,
+  useEffect
 } from 'react'
-
-import useConstant from 'use-constant'
 
 const TabsState = createContext()
 const Elements = createContext()
 
 export const Tabs = ({ state: outerState, children }) => {
   const innerState = useState(0)
-  const elements = useConstant(() => ({ tabs: 0, panels: 0 }))
+  const [elements] = useState(() => ({ tabs: 0, panels: 0 }))
   const state = outerState || innerState
 
   return (
@@ -27,15 +27,16 @@ export const Tabs = ({ state: outerState, children }) => {
 export const useTabState = () => {
   const [activeIndex, setActive] = useContext(TabsState)
   const elements = useContext(Elements)
+  const [tabIndex, setTabIndex] = useState(0)
 
-  const tabIndex = useConstant(() => {
-    const currentIndex = elements.tabs
+  useEffect(() => {
+    if (elements.tabs !== 0) {
+      setTabIndex(elements.tabs)
+    }
     elements.tabs += 1
+  }, [elements])
 
-    return currentIndex
-  })
-
-  const onClick = useConstant(() => () => setActive(tabIndex))
+  const onClick = useCallback(() => setActive(tabIndex), [tabIndex, setActive])
 
   const state = useMemo(
     () => ({
@@ -52,12 +53,14 @@ export const usePanelState = () => {
   const [activeIndex] = useContext(TabsState)
   const elements = useContext(Elements)
 
-  const panelIndex = useConstant(() => {
-    const currentIndex = elements.panels
-    elements.panels += 1
+  const [panelIndex, setPanelIndex] = useState(0)
 
-    return currentIndex
-  })
+  useEffect(() => {
+    if (elements.panels !== 0) {
+      setPanelIndex(elements.panels)
+    }
+    elements.panels += 1
+  }, [elements])
 
   return panelIndex === activeIndex
 }

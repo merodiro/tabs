@@ -14,9 +14,6 @@
     "release:prepare": "shipjs prepare",
     "release:trigger": "shipjs trigger"
   },
-  "dependencies": {
-    "use-constant": "^1.0.0"
-  },
   "peerDependencies": {
     "react": "^16.8.0",
     "react-dom": "^16.8.0"

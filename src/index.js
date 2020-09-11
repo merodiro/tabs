@@ -6,7 +6,8 @@ import React, {
   cloneElement,
   isValidElement,
   useCallback,
-  useEffect
+  useEffect,
+  useRef
 } from 'react'
 
 const TabsState = createContext()
@@ -14,11 +15,11 @@ const Elements = createContext()
 
 export const Tabs = ({ state: outerState, children }) => {
   const innerState = useState(0)
-  const [elements] = useState(() => ({ tabs: 0, panels: 0 }))
+  const [, setElements] = useState(() => ({ tabs: 0, panels: 0 }))
   const state = outerState || innerState
 
   return (
-    <Elements.Provider value={elements}>
+    <Elements.Provider value={setElements}>
       <TabsState.Provider value={state}>{children}</TabsState.Provider>
     </Elements.Provider>
   )
@@ -26,24 +27,27 @@ export const Tabs = ({ state: outerState, children }) => {
 
 export const useTabState = () => {
   const [activeIndex, setActive] = useContext(TabsState)
-  const elements = useContext(Elements)
-  const [tabIndex, setTabIndex] = useState(0)
+  const setElements = useContext(Elements)
+  const tabIndex = useRef()
 
   useEffect(() => {
-    if (elements.tabs !== 0) {
-      setTabIndex(elements.tabs)
-    }
-    elements.tabs += 1
-  }, [elements])
+    setElements(elements => {
+      tabIndex.current = elements.tabs
+      return {
+        ...elements,
+        tabs: elements.tabs + 1
+      }
+    })
+  }, [setElements])
 
-  const onClick = useCallback(() => setActive(tabIndex), [tabIndex, setActive])
+  const onClick = useCallback(() => setActive(tabIndex.current), [setActive])
 
   const state = useMemo(
     () => ({
-      isActive: activeIndex === tabIndex,
+      isActive: activeIndex === tabIndex.current,
       onClick
     }),
-    [activeIndex, onClick, tabIndex]
+    [activeIndex, onClick]
   )
 
   return state
@@ -51,18 +55,21 @@ export const useTabState = () => {
 
 export const usePanelState = () => {
   const [activeIndex] = useContext(TabsState)
-  const elements = useContext(Elements)
+  const setElements = useContext(Elements)
 
-  const [panelIndex, setPanelIndex] = useState(0)
+  const panelIndex = useRef()
 
   useEffect(() => {
-    if (elements.panels !== 0) {
-      setPanelIndex(elements.panels)
-    }
-    elements.panels += 1
-  }, [elements])
+    setElements(elements => {
+      panelIndex.current = elements.panels
+      return {
+        ...elements,
+        panels: elements.panels + 1
+      }
+    })
+  }, [setElements])
 
-  return panelIndex === activeIndex
+  return panelIndex.current === activeIndex
 }
 
 export const Tab = ({ children }) => {
